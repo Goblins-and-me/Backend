@@ -164,6 +164,8 @@ venv.bak/
 # Rope project settings
 .ropeproject
 
+keys/
+
 # mkdocs documentation
 /site
 
