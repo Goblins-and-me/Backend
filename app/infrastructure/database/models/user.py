@@ -1,9 +1,9 @@
+from infrastructure.database.base import Base
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy import String, false
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.domain.enums import Role
-from app.infrastructure.database.base import Base
 
 from .mixins import CreatedAtMixin, IdPkMixin
 
