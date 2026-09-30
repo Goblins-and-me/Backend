@@ -8,7 +8,7 @@ log = logging.getLogger(__name__)
 
 
 async_engine = create_async_engine(
-    url=settings.db.url,
+    url=str(settings.db.url),
     echo=settings.db.echo,
 )
 
