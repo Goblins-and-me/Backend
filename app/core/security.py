@@ -7,6 +7,7 @@ from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
 from core import settings
 from jwt.exceptions import InvalidTokenError
+from pydantic import SecretStr
 
 from .exceptions import InvalidTokenTypeError, TokenValidationError
 
@@ -43,6 +44,12 @@ class JWTCreator:
             algorithm=settings.jwt.algorithm,
         )
 
+    def create_access_token(self, user_id: uuid.UUID) -> str:
+        return self._create_base_token(
+            user_id,
+            "access",
+            timedelta(minutes=settings.jwt.access_exp),
+        )
 
     def create_refresh_token(self, user_id: uuid.UUID) -> str:
         return self._create_base_token(
@@ -69,3 +76,12 @@ class JWTChecker:
         if payload.get("token_type") != token_type:
             raise InvalidTokenTypeError()
         return payload
+
+    def check_access_token(self, token: str) -> dict[str, Any]:
+        return self._check_base_jwt(token, "access")
+
+    def check_refresh_token(self, token: str) -> dict[str, Any]:
+        return self._check_base_jwt(token, "refresh")
+
+
+jwt_checker = JWTChecker()
