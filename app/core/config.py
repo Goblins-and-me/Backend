@@ -1,17 +1,23 @@
-from pydantic import BaseModel
+from pathlib import Path
+
+from pydantic import BaseModel, PostgresDsn, RedisDsn
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# get this path F:\python\user_service | resolve needs to get the absolute path 100 percent of the time
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 
 class ApiPrefix(BaseModel):
     user: str = "/user"
     auth: str = "/auth"
     v1_prefix: str = "/v1"
+    healthcheck: str = "/healthcheck"
 
 
 class ApiConf(BaseModel):
     # TODO you should remember about docker requests
     host: str = "0.0.0.0"
-    port: int = 8001
+    port: int = 8005
 
 
 class LogConf(BaseModel):
@@ -61,11 +67,12 @@ class Redis(BaseModel):
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=(".env.template", ".env"),
+        env_file=(BASE_DIR / ".env.template", BASE_DIR / ".env"),
         case_sensitive=False,
         env_nested_delimiter="__",
         frozen=True,
-        extra="forbid",
+        env_prefix="CONFIG__",
+        extra="ignore",
     )
 
     api_prefix: ApiPrefix = ApiPrefix()
