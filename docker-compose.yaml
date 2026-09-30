@@ -16,6 +16,18 @@ services:
       timeout: 3s
       retries: 3
 
+  redis:
+    image: redis:7-alpine
+    ports:
+      - 127.0.0.1:6379:6379
+    volumes:
+      - user_service_redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 3
+      timeout: 3s
 
 volumes:
   user_service_db:
+  user_service_redis:
