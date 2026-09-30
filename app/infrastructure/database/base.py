@@ -1,7 +1,4 @@
-import uuid
-
-import uuid_utils
-from sqlalchemy.orm import DeclarativeBase, Mapped, declared_attr, mapped_column
+from sqlalchemy.orm import DeclarativeBase, declared_attr
 
 
 class Base(DeclarativeBase):
