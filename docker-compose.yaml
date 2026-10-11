@@ -1,5 +1,26 @@
 name: user-service
 services:
+  app:
+    build: .
+    env_file:
+      - .env.docker
+    ports:
+      - "8005:8000"
+    volumes:
+      - ./keys:/app/keys:ro
+    depends_on:
+      pg:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./app
+          target: /app/app
+        - action: rebuild
+          path: ./poetry.lock
+
   pg:
     image: postgres:18.6
     environment:
