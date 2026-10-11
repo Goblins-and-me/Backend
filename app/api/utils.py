@@ -24,8 +24,8 @@ def set_cookies(response: Response, user_id: uuid.UUID) -> None:
         key="access_token",
         value=jwt_creator.create_access_token(user_id),
         httponly=True,
-        # TODO: do not forget to change secure mode in prod
-        secure=False,
+        # do not forget to change secure mode in prod
+        secure=False,  # secure=True
         samesite="lax",
         max_age=settings.jwt.access_exp * 60,
     )
@@ -34,7 +34,7 @@ def set_cookies(response: Response, user_id: uuid.UUID) -> None:
         key="refresh_token",
         value=jwt_creator.create_refresh_token(user_id),
         httponly=True,
-        # TODO: do not forget to change secure mode in prod
+        # do not forget to change secure mode in prod
         secure=False,  # secure=True
         samesite="lax",
         max_age=settings.jwt.refresh_exp * 24 * 60 * 60,
