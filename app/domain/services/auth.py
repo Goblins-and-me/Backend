@@ -3,9 +3,7 @@ import json
 import secrets
 import time
 import uuid
-from datetime import time
 
-# TODO: in ca you can not do this import!!!
 from core import (
     IntegrityConstraintError,
     InvalidCodeError,
@@ -14,7 +12,7 @@ from core import (
     UserBlockedError,
     security,
 )
-from infrastructure.clients import MailService, mail_service, redis
+from infrastructure.clients import MailService
 from infrastructure.database.crud.user import CRUDUser
 from infrastructure.database.models import User
 from redis.asyncio import Redis
@@ -82,7 +80,6 @@ class AuthService:
 
     async def refresh(self, refresh_token: str) -> uuid.UUID:
         refresh_payload = security.jwt_checker.check_refresh_token(refresh_token)
-        # TODO: blacklisting
         user_id = refresh_payload["sub"]
         user = await self._crud.get(user_id)
         if user is None:
