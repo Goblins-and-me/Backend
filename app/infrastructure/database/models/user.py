@@ -5,10 +5,10 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from app.domain.enums import Role
 
-from .mixins import CreatedAtMixin, IdPkMixin
+from .mixins import CreatedAtMixin, IdPkMixin, UpdatedAtMixin
 
 
-class User(Base, IdPkMixin, CreatedAtMixin):
+class User(Base, IdPkMixin, CreatedAtMixin, UpdatedAtMixin):
     email: Mapped[str] = mapped_column(
         String(255),
         unique=True,

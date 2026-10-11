@@ -41,4 +41,4 @@ class UserSchemaRead(UserschemaBase):
     role: Role
     created_at: datetime
     id: uuid.UUID
-    # TODO: you need to finish up this shema!!!!
+    updated_at: datetime
