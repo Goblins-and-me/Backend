@@ -15,7 +15,6 @@ class ApiPrefix(BaseModel):
 
 
 class ApiConf(BaseModel):
-    # TODO you should remember about docker requests
     host: str = "0.0.0.0"
     port: int = 8005
 
