@@ -36,7 +36,7 @@ async def login_user(
     service: Annotated[AuthService, Depends(dep_get_auth_service)],
 ):
     obj = await service.login_user(user_data)
-    set_cookies(response, obj.id)
+    set_cookies(response, obj.id, obj.role)
     return {"detail": "Logged in successfully"}
 
 
@@ -60,6 +60,6 @@ async def refresh(
     refresh_token: Annotated[str, Depends(get_refresh_token)],
     service: Annotated[AuthService, Depends(dep_get_auth_service)],
 ):
-    user_id: uuid = await service.refresh(refresh_token)
-    set_cookies(response, user_id)
+    user = await service.refresh(refresh_token)
+    set_cookies(response, user.id, user.role)
     return {"message": "Token successfully refreshed"}

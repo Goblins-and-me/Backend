@@ -6,6 +6,7 @@ import jwt
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
 from core import settings
+from domain.enums import Role
 from jwt.exceptions import InvalidTokenError
 from pydantic import SecretStr
 
@@ -31,9 +32,11 @@ class JWTCreator:
         user_id: uuid.UUID,
         token_type: str,
         expires_delta: timedelta,
+        role: Role,
     ) -> str:
         payload = {
             "sub": str(user_id),
+            "role": role,
             "exp": datetime.now(tz=timezone.utc) + expires_delta,
             "iat": datetime.now(tz=timezone.utc),
             "token_type": token_type,
@@ -44,18 +47,20 @@ class JWTCreator:
             algorithm=settings.jwt.algorithm,
         )
 
-    def create_access_token(self, user_id: uuid.UUID) -> str:
+    def create_access_token(self, user_id: uuid.UUID, role: Role) -> str:
         return self._create_base_token(
             user_id,
             "access",
             timedelta(minutes=settings.jwt.access_exp),
+            role,
         )
 
-    def create_refresh_token(self, user_id: uuid.UUID) -> str:
+    def create_refresh_token(self, user_id: uuid.UUID, role: Role) -> str:
         return self._create_base_token(
             user_id,
             "refresh",
             timedelta(days=settings.jwt.refresh_exp),
+            role,
         )
 
 

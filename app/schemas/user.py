@@ -10,7 +10,7 @@ class UserschemaBase(BaseModel):
     email: EmailStr
 
 
-# This is an input shema to check some fields
+# This is an input sсhema to check some fields
 class UserSchemaAdd(UserschemaBase):
     password: SecretStr
     password_confirm: SecretStr

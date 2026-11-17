@@ -78,7 +78,7 @@ class AuthService:
             raise InvalidCredentialsError()
         return obj
 
-    async def refresh(self, refresh_token: str) -> uuid.UUID:
+    async def refresh(self, refresh_token: str) -> User:
         refresh_payload = security.jwt_checker.check_refresh_token(refresh_token)
         user_id = refresh_payload["sub"]
         user = await self._crud.get(user_id)
@@ -97,7 +97,7 @@ class AuthService:
             ex=the_rest_of_old_token_ttl,
         ):
             raise TokenValidationError()
-        return uuid.UUID(user_id)
+        return user
 
     def _get_current_user_id(self, access_token: str) -> str:
         user_data = security.jwt_checker.check_access_token(access_token)

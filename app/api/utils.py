@@ -1,6 +1,7 @@
 import uuid
 
 from core import jwt_creator, limiter, settings
+from domain.enums import Role
 from fastapi import FastAPI, Response
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -19,10 +20,10 @@ def delete_cookies(response: Response) -> None:
     response.delete_cookie(key="refresh_token")
 
 
-def set_cookies(response: Response, user_id: uuid.UUID) -> None:
+def set_cookies(response: Response, user_id: uuid.UUID, role: Role) -> None:
     response.set_cookie(
         key="access_token",
-        value=jwt_creator.create_access_token(user_id),
+        value=jwt_creator.create_access_token(user_id, role),
         httponly=True,
         # do not forget to change secure mode in prod
         secure=False,  # secure=True
@@ -32,7 +33,7 @@ def set_cookies(response: Response, user_id: uuid.UUID) -> None:
 
     response.set_cookie(
         key="refresh_token",
-        value=jwt_creator.create_refresh_token(user_id),
+        value=jwt_creator.create_refresh_token(user_id, role),
         httponly=True,
         # do not forget to change secure mode in prod
         secure=False,  # secure=True
