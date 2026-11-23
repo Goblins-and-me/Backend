@@ -1,3 +1,4 @@
+// ProductDetailResponse.java
 package com.shop.SweetStory.catalog.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -5,6 +6,19 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.math.BigDecimal;
 import java.util.List;
 
+/**
+ * DTO с подробной информацией о товаре каталога для клиента.
+ *
+ * @param id идентификатор товара
+ * @param name название товара
+ * @param images список изображений товара
+ * @param description описание товара
+ * @param availableFillings доступные начинки (в JSON {@code available_fillings})
+ * @param availableDecors доступные варианты декора (в JSON {@code available_decors})
+ * @param minWeight минимальный вес товара
+ * @param maxWeight максимальный вес товара
+ * @param cakePrice цена товара (в JSON {@code cake_price})
+ */
 public record ProductDetailResponse(
         Long id,
         String name,
