@@ -1,3 +1,4 @@
+// CreateProductRequest.java
 package com.shop.SweetStory.catalog.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -8,6 +9,18 @@ import jakarta.validation.constraints.Positive;
 import java.math.BigDecimal;
 import java.util.List;
 
+/**
+ * DTO запроса на создание нового товара в каталоге с правилами валидации полей.
+ *
+ * @param name название товара (обязательное поле)
+ * @param images список ссылок или путей к изображениям товара
+ * @param description описание товара
+ * @param fillings доступные варианты начинок
+ * @param decorations доступные варианты декора
+ * @param minWeight минимальный вес товара (обязательное положительное значение)
+ * @param maxWeight максимальный вес товара (обязательное положительное значение)
+ * @param cakePrice базовая цена товара (обязательное положительное значение, в JSON {@code cake_price})
+ */
 public record CreateProductRequest(
 
         @NotBlank(message = "name must not be empty")
