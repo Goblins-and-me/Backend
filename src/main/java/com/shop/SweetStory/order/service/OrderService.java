@@ -39,13 +39,18 @@ public class OrderService {
     private final UserRepository userRepository;
     private final long maxOrdersPerDate;
 
+    private static final BigDecimal MAX_WEIGHT_PER_DATE_KG = BigDecimal.valueOf(6.0);
+    private final BigDecimal maxWeightPerDate;
+
+
     public OrderService(
             OrderRepository orderRepository,
             ProductRepository productRepository,
             FillingRepository fillingRepository,
             DecorationRepository decorationRepository,
             UserRepository userRepository,
-            @Value("${app.orders.max-per-date:3}") long maxOrdersPerDate
+            @Value("${app.orders.max-per-date:3}") long maxOrdersPerDate,
+            @Value("${app.orders.max-weight-per-date:6.0}") BigDecimal maxWeightPerDate
     ) {
         this.orderRepository = orderRepository;
         this.productRepository = productRepository;
@@ -53,16 +58,19 @@ public class OrderService {
         this.decorationRepository = decorationRepository;
         this.userRepository = userRepository;
         this.maxOrdersPerDate = maxOrdersPerDate;
+        this.maxWeightPerDate = maxWeightPerDate != null ? maxWeightPerDate : MAX_WEIGHT_PER_DATE_KG;
     }
 
     @Transactional
     public CreateOrderResponse createOrder(CreateOrderRequest request) {
+        LocalDate deliveryDate = request.delivery_date();
+
         Long activeOrdersCount = orderRepository.countByDeliveryDateAndStatusNot(
-                request.delivery_date(),
+                deliveryDate,
                 OrderStatus.CANCELLED
         );
         if (activeOrdersCount != null && activeOrdersCount >= maxOrdersPerDate) {
-            throw new IllegalStateException("DATE_LIMIT_EXCEEDED: Достигнут лимит заказов на дату " + request.delivery_date());
+            throw new IllegalStateException("DATE_LIMIT_EXCEEDED: Достигнут лимит заказов на дату " + deliveryDate);
         }
 
         User currentUser = resolveCurrentUser();
@@ -70,6 +78,7 @@ public class OrderService {
                 .orElseThrow(() -> new NoSuchElementException("Product not found with id: " + request.product_id()));
 
         validateWeight(product, request.weight());
+        validateDailyWeightLimit(deliveryDate, request.weight());
 
         Filling filling = resolveAndValidateFilling(product, request.filling_id());
         Decoration decoration = resolveAndValidateDecoration(product, request.decoration_id());
@@ -77,7 +86,7 @@ public class OrderService {
         BigDecimal orderPrice = calculateOrderPrice(product, filling, decoration, request.weight());
 
         Order order = new Order();
-        order.setDeliveryDate(request.delivery_date());
+        order.setDeliveryDate(deliveryDate);
         order.setProduct(product);
         order.setUser(currentUser);
         order.setFilling(filling);
@@ -88,6 +97,27 @@ public class OrderService {
 
         Order saved = orderRepository.save(order);
         return new CreateOrderResponse(toCreatedItemResponse(saved));
+    }
+
+    private void validateDailyWeightLimit(LocalDate deliveryDate, Double newWeight) {
+        if (newWeight == null || newWeight <= 0) {
+            throw new IllegalArgumentException("Order weight must be positive");
+        }
+
+        Double rawCurrentWeight = orderRepository.sumWeightByDeliveryDateAndStatusNot(
+                deliveryDate,
+                OrderStatus.CANCELLED
+        );
+        BigDecimal currentWeight = rawCurrentWeight != null
+                ? BigDecimal.valueOf(rawCurrentWeight)
+                : BigDecimal.ZERO;
+        BigDecimal requestedWeight = BigDecimal.valueOf(newWeight);
+
+        if (currentWeight.add(requestedWeight).compareTo(maxWeightPerDate) > 0) {
+            throw new IllegalStateException(
+                    "WEIGHT_LIMIT_EXCEEDED: Превышен лимит веса (" + maxWeightPerDate + " кг) на дату " + deliveryDate
+            );
+        }
     }
 
     public MyOrderResponse getMyOrders() {

@@ -6,6 +6,7 @@ import com.shop.SweetStory.order.entity.OrderStatus;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -23,4 +24,17 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     @Query("SELECT SUM(o.orderPrice) FROM Order o WHERE o.status != :cancelledStatus")
     BigDecimal calculateTotalRevenue(OrderStatus cancelledStatus);
+
+    @Query("""
+        SELECT COALESCE(SUM(o.weight), 0)
+        FROM Order o
+        WHERE o.deliveryDate = :deliveryDate
+          AND o.status <> :excludedStatus
+        """)
+    Double sumWeightByDeliveryDateAndStatusNot(
+            @Param("deliveryDate") LocalDate deliveryDate,
+            @Param("excludedStatus") OrderStatus excludedStatus
+    );
+
+
 }
