@@ -1,0 +1,32 @@
+$kind: http-request
+url: "{{base_url}}/api/users/me"
+method: DELETE
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Статус 200 OK\", () => pm.response.to.have.status(200));\r
+
+      \r
+
+      pm.test(\"Аккаунт удален и кука очищена\", () => {\r
+
+      \    const json = pm.response.json();\r
+
+      \    pm.expect(json.message).to.eql(\"Аккаунт успешно удален\");\r
+
+      \r
+
+      \    const name = pm.collectionVariables.get(\"auth_cookie_name\");\r
+
+      \    const setCookie = pm.response.headers.get(\"Set-Cookie\");\r
+
+      \    \r
+
+      \    // Проверяем, что сервер прислал куку с нулевым временем жизни\r
+
+      \    pm.expect(setCookie).to.include(`${name}=`);\r
+
+      \    pm.expect(setCookie).to.include(\"Max-Age=0\");\r
+
+      });\r\n"
+    language: text/javascript
+order: 12000

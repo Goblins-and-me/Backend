@@ -1,0 +1,33 @@
+$kind: http-request
+url: "{{base_url}}/api/auth/login"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \  \"email\": \"{{user_email}}\",\r
+
+    \  \"password\": \"{{user_password}}\"\r
+
+    }\r\n"
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Статус 200 OK\", () => pm.response.to.have.status(200));\r
+
+      \r
+
+      pm.test(\"Кука access_token установлена\", () => {\r
+
+      \    pm.expect(pm.cookies.has(\"access_token\")).to.be.true;\r
+
+      \    pm.expect(pm.cookies.get(\"access_token\")).to.be.a(\"string\").and.\
+      not.be.empty;\r
+
+      });"
+    language: text/javascript
+  - type: beforeRequest
+    code: "pm.cookies.jar().clear(pm.collectionVariables.get(\"base_url\"), () =>
+      {});\r\n"
+    language: text/javascript
+examples: .resources/Login User.resources/examples
+order: 11000

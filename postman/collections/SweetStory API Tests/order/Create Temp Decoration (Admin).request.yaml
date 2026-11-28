@@ -1,0 +1,25 @@
+$kind: http-request
+url: "{{base_url}}/api/admin/decorations"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \    \"name\": \"Тестовая начинка для торта\", \r
+
+    \    \"description\": \"Крем\", \r
+
+    \    \"price\": 5.00\r
+
+    }"
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Декор создан (201)\", () => pm.response.to.have.status(201));\r
+
+      pm.collectionVariables.set(\"decoration_id\",
+      pm.response.json().decoration.id);\r\n"
+    language: text/javascript
+  - type: beforeRequest
+    code: ""
+    language: text/javascript
+order: 2000

@@ -1,0 +1,23 @@
+$kind: http-request
+url: "{{base_url}}/api/admin/orders?group_by=date"
+method: GET
+queryParams:
+  group_by: date
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Статус 200 OK\", () => pm.response.to.have.status(200));\r
+
+      pm.test(\"Заказы сгруппированы по дате доставки\", () => {\r
+
+      \    const json = pm.response.json();\r
+
+      \    const dateKey = pm.collectionVariables.get(\"delivery_date\");\r
+
+      \    pm.expect(json.grouped_orders).to.have.property(dateKey);\r
+
+      \    pm.expect(json.grouped_orders[dateKey]).to.be.an(\"array\").that.is.\
+      not.empty;\r
+
+      });\r\n"
+    language: text/javascript
+order: 11000

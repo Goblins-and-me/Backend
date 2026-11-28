@@ -1,0 +1,12 @@
+$kind: http-request
+url: "{{base_url}}/api/users/me"
+method: DELETE
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Нельзя удалить аккаунт при наличии заказов (4xx/5xx)\", () => {\r
+
+      \    pm.expect(pm.response.code).to.be.within(400, 499);\r
+
+      });\r\n"
+    language: text/javascript
+order: 9000

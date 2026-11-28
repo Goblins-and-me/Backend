@@ -1,0 +1,33 @@
+$kind: http-request
+url: "{{base_url}}/api/admin/products"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \  \"name\": \"Запрещенный торт\",\r
+
+    \  \"images\": [\"https://example.com\"],\r
+
+    \  \"description\": \"Попытка создания без прав\",\r
+
+    \  \"filling_ids\": [],\r
+
+    \  \"decoration_ids\": [],\r
+
+    \  \"minWeight\": 1.0,\r
+
+    \  \"maxWeight\": 5.0,\r
+
+    \  \"cake_price\": 45.00\r
+
+    }\r\n"
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Доступ запрещен без прав админа (401 или 403)\", () => {\r
+
+      \    pm.expect(pm.response.code).to.be.oneOf([401, 403]);\r
+
+      });\r\n"
+    language: text/javascript
+order: 2000

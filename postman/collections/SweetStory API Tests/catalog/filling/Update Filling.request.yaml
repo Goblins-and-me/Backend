@@ -1,0 +1,22 @@
+$kind: http-request
+url: "{{base_url}}/api/admin/fillings/{{filling_id}}"
+method: PUT
+body:
+  type: json
+  content: "{\r
+
+    \  \"name\": \"{{filling_name}}_Updated\",\r
+
+    \  \"description\": \"Обновленное описание начинки\",\r
+
+    \  \"price\": 14.50\r
+
+    }\r\n"
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Статус 200 OK\", () => pm.response.to.have.status(200));\r
+
+      pm.test(\"Статус ответа success\", () =>
+      pm.expect(pm.response.json().status).to.eql(\"success\"));\r\n"
+    language: text/javascript
+order: 9000

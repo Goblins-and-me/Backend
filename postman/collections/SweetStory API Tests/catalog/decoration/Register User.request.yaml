@@ -1,0 +1,75 @@
+$kind: http-request
+url: "{{base_url}}/api/auth/register"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \  \"email\": \"{{user_email}}\",\r
+
+    \  \"name\": \"  Test User  \",\r
+
+    \  \"password\": \"{{user_password}}\",\r
+
+    \  \"phone\": \"    +375291234567   \"\r
+
+    }\r\n"
+scripts:
+  - type: beforeRequest
+    code: "pm.cookies.jar().clear(pm.collectionVariables.get(\"base_url\"), () =>
+      {});\r
+
+      \r
+
+      \r
+
+      const randomId = Math.floor(Math.random() * 1000000);\r
+
+      pm.collectionVariables.set(\"user_email\",
+      `testuser_${randomId}@sweetstory.com`);\r\n"
+    language: text/javascript
+  - type: afterResponse
+    code: "pm.test(\"Статус 201 Created\", () => pm.response.to.have.status(201));\r
+
+      \r
+
+      pm.test(\"Контракт AuthResponse\", () => {\r
+
+      \    const json = pm.response.json();\r
+
+      \    pm.expect(json.status).to.eql(\"success\");\r
+
+      \    pm.expect(json.user.email).to.eql(pm.collectionVariables.get(\"user_\
+      email\"));\r
+
+      \    pm.expect(json.user.name).to.eql(\"Test User\");\r
+
+      \    pm.expect(json.user.is_admin).to.eql(false);\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Установлена HttpOnly кука\", () => {\r
+
+      \    const setCookie = pm.response.headers.get(\"Set-Cookie\");\r
+
+      \    pm.expect(setCookie).to.include(\"HttpOnly\");\r
+
+      \    pm.expect(setCookie).to.include(\"access_token=\");\r
+
+      \    pm.collectionVariables.set(\"auth_cookie_name\", \"access_token\");\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Кука access_token установлена\", () => {\r
+
+      \    pm.expect(pm.cookies.has(\"access_token\")).to.be.true;\r
+
+      \    pm.expect(pm.cookies.get(\"access_token\")).to.not.be.empty;\r
+
+      });\r\n"
+    language: text/javascript
+order: 1000

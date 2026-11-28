@@ -1,0 +1,32 @@
+$kind: http-request
+url: PUT {{base_url}}/api/admin/products/{{product_id}}
+method: PUT
+body:
+  type: json
+  content: "{\r
+
+    \  \"name\": \"{{product_name}}_Updated\",\r
+
+    \  \"images\": [\"https://example.com\"],\r
+
+    \  \"description\": \"Обновленное описание торта\",\r
+
+    \  \"filling_ids\": [{{filling_id}}],\r
+
+    \  \"decoration_ids\": [],\r
+
+    \  \"minWeight\": 2.0,\r
+
+    \  \"maxWeight\": 6.0,\r
+
+    \  \"cake_price\": 65.00\r
+
+    }\r\n"
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Статус 200 OK\", () => pm.response.to.have.status(200));\r
+
+      pm.test(\"Статус ответа success\", () =>
+      pm.expect(pm.response.json().status).to.eql(\"success\"));\r\n"
+    language: text/javascript
+order: 11000

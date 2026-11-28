@@ -1,0 +1,68 @@
+$kind: http-request
+url: "{{base_url}}/api/admin/products"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \  \"name\": \"{{product_name}}\",\r
+
+    \  \"images\": [\r
+
+    \    \"https://example.com\",\r
+
+    \    \"https://example.com\"\r
+
+    \  ],\r
+
+    \  \"description\": \"Фирменный бисквитный торт\",\r
+
+    \  \"filling_ids\": [{{filling_id}}],\r
+
+    \  \"decoration_ids\": [{{decoration_id}}],\r
+
+    \  \"minWeight\": 1.5,\r
+
+    \  \"maxWeight\": 5.0,\r
+
+    \  \"cake_price\": {{product_price}}\r
+
+    }\r\n"
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Статус 201 Created\", () => pm.response.to.have.status(201));\r
+
+      \r
+
+      pm.test(\"Контракт CreateProductResponse и вложенные связи соблюдены\", () => {\r
+
+      \    const json = pm.response.json();\r
+
+      \    pm.expect(json.status).to.eql(\"success\");\r
+
+      \    pm.expect(json.product).to.be.an(\"object\");\r
+
+      \    pm.expect(json.product.id).to.be.a(\"number\");\r
+
+      \    pm.expect(json.product.name).to.eql(pm.collectionVariables.get(\"product_name\"));\r
+
+      \    pm.expect(json.product.images).to.be.an(\"array\");\r
+
+      \    pm.expect(json.product.minWeight).to.eql(1.5);\r
+
+      \    pm.expect(json.product.maxWeight).to.eql(5.0);\r
+
+      \r
+
+      \    pm.collectionVariables.set(\"product_id\", json.product.id);\r
+
+      });\r\n"
+    language: text/javascript
+  - type: beforeRequest
+    code: "const randomId = Math.floor(Math.random() * 100000);\r
+
+      pm.collectionVariables.set(\"product_name\", `Торт_Сказка_${randomId}`);\r
+
+      pm.collectionVariables.set(\"product_price\", (Math.random() * 50 + 30).toFixed(2));\r\n"
+    language: text/javascript
+order: 8000

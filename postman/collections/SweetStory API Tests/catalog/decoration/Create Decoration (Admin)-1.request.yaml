@@ -1,0 +1,56 @@
+$kind: http-request
+name: Create Decoration (Admin)
+url: "{{base_url}}/api/admin/decorations"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \  \"name\": \"{{decoration_name}}\",\r
+
+    \  \"description\": \"Тестовая декорация\",\r
+
+    \  \"price\": {{decoration_price}}\r
+
+    }\r\n"
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Статус 201 Created\", () => pm.response.to.have.status(201));\r
+
+      \r
+
+      pm.test(\"Контракт CreateDecorationResponse соблюден\", () => {\r
+
+      \    const json = pm.response.json();\r
+
+      \    pm.expect(json.status).to.eql(\"success\");\r
+
+      \    pm.expect(json.decoration).to.be.an(\"object\");\r
+
+      \    pm.expect(json.decoration.id).to.be.a(\"number\");\r
+
+      \    pm.expect(json.decoration.name).to.eql(pm.collectionVariables.get(\"\
+      decoration_name\"));\r
+
+      \    pm.expect(json.decoration.description).to.eql(\"Тестовая
+      декорация\");\r
+
+      \r
+
+      \    // Сохраняем ID для Update и Delete\r
+
+      \    pm.collectionVariables.set(\"decoration_id\", json.decoration.id);\r
+
+      });\r\n"
+    language: text/javascript
+  - type: beforeRequest
+    code: "const randomId = Math.floor(Math.random() * 100000);\r
+
+      \r
+
+      pm.collectionVariables.set(\"decoration_name\", `Декор_${randomId}`);\r
+
+      pm.collectionVariables.set(\"decoration_price\", (Math.random() *
+      25).toFixed(2));\r\n"
+    language: text/javascript
+order: 5704

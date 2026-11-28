@@ -1,0 +1,11 @@
+$kind: http-request
+url: "{{base_url}}/api/admin/fillings/{{filling_id}}"
+method: DELETE
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Статус 200 OK\", () => pm.response.to.have.status(200));\r
+
+      pm.test(\"Начинка удалена\", () =>
+      pm.expect(pm.response.json().status).to.eql(\"success\"));\r\n"
+    language: text/javascript
+order: 10000

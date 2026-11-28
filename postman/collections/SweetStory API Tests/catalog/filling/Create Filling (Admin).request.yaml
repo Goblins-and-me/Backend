@@ -1,0 +1,51 @@
+$kind: http-request
+url: "{{base_url}}/api/admin/fillings"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \  \"name\": \"{{filling_name}}\",\r
+
+    \  \"description\": \"Нежный крем-чиз с малиной\",\r
+
+    \  \"price\": {{filling_price}}\r
+
+    }\r\n"
+scripts:
+  - type: beforeRequest
+    code: "const randomId = Math.floor(Math.random() * 100000);\r
+
+      pm.collectionVariables.set(\"filling_name\", `Начинка_${randomId}`);\r
+
+      pm.collectionVariables.set(\"filling_price\", (Math.random() * 15 +
+      5).toFixed(2));\r\n"
+    language: text/javascript
+  - type: afterResponse
+    code: "pm.test(\"Статус 201 Created\", () => pm.response.to.have.status(201));\r
+
+      \r
+
+      pm.test(\"Контракт CreateFillingResponse соблюден\", () => {\r
+
+      \    const json = pm.response.json();\r
+
+      \    pm.expect(json.status).to.eql(\"success\");\r
+
+      \    pm.expect(json.filling).to.be.an(\"object\");\r
+
+      \    pm.expect(json.filling.id).to.be.a(\"number\");\r
+
+      \    pm.expect(json.filling.name).to.eql(pm.collectionVariables.get(\"fil\
+      ling_name\"));\r
+
+      \    pm.expect(json.filling.description).to.eql(\"Нежный крем-чиз с
+      малиной\");\r
+
+      \r
+
+      \    pm.collectionVariables.set(\"filling_id\", json.filling.id);\r
+
+      });\r\n"
+    language: text/javascript
+order: 6000

@@ -1,0 +1,27 @@
+$kind: http-request
+url: "{{base_url}}/api/admin/orders/{{order_id}}/status"
+method: PATCH
+body:
+  type: json
+  content: "{\r
+
+    \    \"order_status\": \"completed\"\r
+
+    }"
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Статус 200 OK\", () => pm.response.to.have.status(200));\r
+
+      pm.test(\"Контракт UpdateOrderStatusResponse соблюден\", () => {\r
+
+      \    const json = pm.response.json();\r
+
+      \    pm.expect(json.status).to.eql(\"success\");\r
+
+      \    pm.expect(json.order_id).to.eql(Number(pm.collectionVariables.get(\"order_id\")));\r
+
+      \    pm.expect(json.new_status).to.eql(\"completed\");\r
+
+      });\r\n"
+    language: text/javascript
+order: 12000

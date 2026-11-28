@@ -1,0 +1,19 @@
+$kind: collection
+variables:
+  base_url: http://localhost:8080
+  auth_cookie_name: ""
+  admin_email: admin@sweetstory.com
+  admin_password: admin1234
+  user_email: ""
+  user_password: ""
+  decoration_id: ""
+  decoration_name: ""
+  decoration_price: ""
+  filling_id: ""
+  filling_name: ""
+  filling_price: ""
+  product_id: ""
+  product_name: ""
+  product_price: ""
+  order_id: ""
+  delivery_date: ""

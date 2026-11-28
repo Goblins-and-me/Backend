@@ -1,0 +1,32 @@
+$kind: http-request
+name: Update Decoration (Admin)
+url: "{{base_url}}/api/admin/decorations/{{decoration_id}}"
+method: PUT
+body:
+  type: json
+  content: "{\r
+
+    \  \"name\": \"{{decoration_name}}_Updated\",\r
+
+    \  \"description\": \"Обновленное описание декора\",\r
+
+    \  \"price\": 19.99\r
+
+    }\r\n"
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Статус 200 OK\", () => pm.response.to.have.status(200));\r
+
+      \r
+
+      pm.test(\"Ответ ActionMessageResponse содержит статус успеха\", () => {\r
+
+      \    const json = pm.response.json();\r
+
+      \    pm.expect(json.status).to.eql(\"success\");\r
+
+      \    pm.expect(json.message).to.be.a(\"string\").and.not.be.empty;\r
+
+      });\r\n"
+    language: text/javascript
+order: 9000

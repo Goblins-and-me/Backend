@@ -1,0 +1,26 @@
+$kind: http-request
+url: "{{base_url}}/api/admin/fillings"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \  \"name\": \"\",\r
+
+    \  \"description\": \"\",\r
+
+    \  \"price\": -4.0\r
+
+    }\r\n"
+scripts:
+  - type: beforeRequest
+    code: ""
+    language: text/javascript
+  - type: afterResponse
+    code: "pm.test(\"Ошибка валидации (4xx)\", () => {\r
+
+      \    pm.expect(pm.response.code).to.be.within(400, 499);\r
+
+      });\r\n"
+    language: text/javascript
+order: 5977

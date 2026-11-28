@@ -1,0 +1,25 @@
+$kind: http-request
+url: "{{base_url}}/api/admin/fillings"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \  \"name\": \"Тестовая начинка для торта\",\r
+
+    \  \"description\": \"Сникерс\",\r
+
+    \  \"price\": 7.00\r
+
+    }\r\n"
+scripts:
+  - type: beforeRequest
+    code: ""
+    language: text/javascript
+  - type: afterResponse
+    code: "pm.test(\"Декор создан (201)\", () => pm.response.to.have.status(201));\r
+
+      pm.collectionVariables.set(\"filling_id\",
+      pm.response.json().filling.id);\r\n"
+    language: text/javascript
+order: 3000

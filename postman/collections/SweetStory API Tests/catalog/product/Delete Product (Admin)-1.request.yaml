@@ -1,0 +1,9 @@
+$kind: http-request
+name: Delete Product (Admin)
+url: "{{base_url}}/api/admin/products/{{product_id}}"
+method: DELETE
+scripts:
+  - type: afterResponse
+    code: pm.test("Продукт удален (200)", () => pm.response.to.have.status(200));
+    language: text/javascript
+order: 12000

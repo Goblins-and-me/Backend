@@ -1,0 +1,38 @@
+$kind: http-request
+url: "{{base_url}}/api/stats/online"
+method: GET
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Статус ответа 200 OK\", function () {\r
+
+      \    pm.response.to.have.status(200);\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Ответ в формате JSON\", function () {\r
+
+      \    pm.response.to.be.json;\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Поле onlineUserCount существует и является числом >= 0\", function () {\r
+
+      \    const jsonData = pm.response.json();\r
+
+      \    pm.expect(jsonData).to.have.property(\"onlineUserCount\");\r
+
+      \    pm.expect(jsonData.onlineUserCount).to.be.a(\"number\");\r
+
+      \    pm.expect(jsonData.onlineUserCount).to.be.at.least(0);\r
+
+      });\r
+
+      \r
+
+      pm.environment.set(\"initialOnline\", onlineData.onlineUserCount);"
+    language: text/javascript
+order: 2000

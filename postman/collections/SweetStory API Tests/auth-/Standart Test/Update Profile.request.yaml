@@ -1,0 +1,31 @@
+$kind: http-request
+url: "{{base_url}}/api/users/me"
+method: PATCH
+body:
+  type: json
+  content: "{\r
+
+    \  \"name\": \"Updated Sweet User\",\r
+
+    \  \"phone\": \"+375299998877\",\r
+
+    \  \"avatar\": \"{{$randomAvatarImage}}\"\r
+
+    }\r\n"
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Статус 200 OK\", () => pm.response.to.have.status(200));\r
+
+      \r
+
+      pm.test(\"Имя и аватар обновлены\", () => {\r
+
+      \    const json = pm.response.json();\r
+
+      \    pm.expect(json.user.name).to.eql(\"Updated Sweet User\");\r
+
+      \    pm.expect(json.user.phone).to.eql(\"+375299998877\");\r
+
+      });\r\n"
+    language: text/javascript
+order: 7000

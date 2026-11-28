@@ -1,0 +1,23 @@
+$kind: http-request
+url: "{{base_url}}/api/orders"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \  \"delivery_date\": \"2026-12-05\",\r
+
+    \  \"product_id\": {{product_id}},\r
+
+    \  \"weight\": -2.0\r
+
+    }\r\n"
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Ошибка валидации отрицательного веса (4xx)\", () => {\r
+
+      \    pm.expect(pm.response.code).to.be.within(400, 499);\r
+
+      });\r\n"
+    language: text/javascript
+order: 6000

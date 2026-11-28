@@ -1,0 +1,32 @@
+$kind: http-request
+url: "{{base_url}}/api/admin/products"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \  \"name\": \"Торт для заказа\",\r
+
+    \  \"images\": [\"https://example.com\"],\r
+
+    \  \"description\": \"Тестовый торт\",\r
+
+    \  \"filling_ids\": [{{filling_id}}],\r
+
+    \  \"decoration_ids\": [{{decoration_id}}],\r
+
+    \  \"minWeight\": 1.0,\r
+
+    \  \"maxWeight\": 5.0,\r
+
+    \  \"cake_price\": 40.00\r
+
+    }\r\n"
+scripts:
+  - type: afterResponse
+    code: pm.collectionVariables.set("product_id", pm.response.json().product.id);
+    language: text/javascript
+  - type: beforeRequest
+    code: ""
+    language: text/javascript
+order: 5000

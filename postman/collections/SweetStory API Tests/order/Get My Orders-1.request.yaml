@@ -1,0 +1,27 @@
+$kind: http-request
+name: Get My Orders
+url: "{{base_url}}/api/orders/my"
+method: GET
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Статус 200 OK\", () => pm.response.to.have.status(200));\r
+
+      \r
+
+      pm.test(\"Созданный заказ есть в MyOrderResponse\", () => {\r
+
+      \    const json = pm.response.json();\r
+
+      \    pm.expect(json.orders).to.be.an(\"array\").that.is.not.empty;\r
+
+      \    const myOrder = json.orders.find(o => o.id ===
+      Number(pm.collectionVariables.get(\"order_id\")));\r
+
+      \    pm.expect(myOrder).to.be.an(\"object\");\r
+
+      \    pm.expect(myOrder.product.id).to.eql(Number(pm.collectionVariables.g\
+      et(\"product_id\")));\r
+
+      });\r\n"
+    language: text/javascript
+order: 8000

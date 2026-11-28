@@ -1,0 +1,36 @@
+$kind: http-request
+url: "{{base_url}}/api/auth/register"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \    \"email\": \"{{user_email}}\",\r
+
+    \    \"name\": \"Another User\",\r
+
+    \    \"password\": \"{{user_password}}\",\r
+
+    \    \"phone\": \"+375290000000\"\r
+
+    }"
+scripts:
+  - type: beforeRequest
+    code: ""
+    language: text/javascript
+  - type: afterResponse
+    code: "pm.test(\"Ошибка дубликата (4xx)\", () => {\r
+
+      \    pm.expect(pm.response.code).to.be.within(400, 499);\r
+
+      });\r
+
+      \r
+
+      pm.test(\"Заголовок Set-Cookie не отправлен\", () => {\r
+
+      \    pm.expect(pm.response.headers.has(\"Set-Cookie\")).to.be.false;\r
+
+      });\r\n"
+    language: text/javascript
+order: 2000

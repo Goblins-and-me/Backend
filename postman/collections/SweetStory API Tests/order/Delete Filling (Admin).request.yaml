@@ -1,0 +1,9 @@
+$kind: http-request
+url: "{{base_url}}/api/admin/fillings/{{filling_id}}"
+method: DELETE
+scripts:
+  - type: afterResponse
+    code: pm.test("Временная начинка удалена (200)", () =>
+      pm.response.to.have.status(200));
+    language: text/javascript
+order: 16000

@@ -1,0 +1,29 @@
+$kind: http-request
+url: "{{base_url}}/api/products/{{product_id}}"
+method: GET
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Статус 200 OK\", () => pm.response.to.have.status(200));\r
+
+      \r
+
+      pm.test(\"Контракт ProductDetailResponse соблюден\", () => {\r
+
+      \    const json = pm.response.json();\r
+
+      \    pm.expect(json.id).to.eql(Number(pm.collectionVariables.get(\"produc\
+      t_id\")));\r
+
+      \    pm.expect(json).to.have.all.keys(\r
+
+      \        \"id\", \"name\", \"images\", \"description\",\r
+
+      \        \"available_fillings\", \"available_decors\",\r
+
+      \        \"minWeight\", \"maxWeight\", \"cake_price\"\r
+
+      \    );\r
+
+      });\r\n"
+    language: text/javascript
+order: 10000

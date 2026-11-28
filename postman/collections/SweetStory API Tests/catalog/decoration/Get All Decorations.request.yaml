@@ -1,0 +1,24 @@
+$kind: http-request
+url: "{{base_url}}/api/decorations"
+method: GET
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Статус 200 OK\", () => pm.response.to.have.status(200));\r
+
+      \r
+
+      pm.test(\"Контракт DecorationListResponse соблюден\", () => {\r
+
+      \    const json = pm.response.json();\r
+
+      \    pm.expect(json).to.have.property(\"decorations\");\r
+
+      \    pm.expect(json.decorations).to.be.an(\"array\");\r
+
+      \r
+
+      \    pm.expect(json.decorations).to.be.an(\"array\").that.is.not.empty;\r
+
+      });\r\n"
+    language: text/javascript
+order: 7000

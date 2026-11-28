@@ -1,0 +1,60 @@
+$kind: http-request
+url: "{{base_url}}/api/orders"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \  \"delivery_date\": \"{{delivery_date}}\",\r
+
+    \  \"product_id\": {{product_id}},\r
+
+    \  \"filling_id\": {{filling_id}},\r
+
+    \  \"decoration_id\": {{decoration_id}},\r
+
+    \  \"weight\": 2.5\r
+
+    }\r\n"
+scripts:
+  - type: afterResponse
+    code: "pm.test(\"Статус 201 Created\", () => pm.response.to.have.status(201));\r
+
+      \r
+
+      pm.test(\"Контракт CreateOrderResponse соблюден\", () => {\r
+
+      \    const json = pm.response.json();\r
+
+      \    pm.expect(json.status).to.eql(\"success\");\r
+
+      \    pm.expect(json.message).to.eql(\"order successfully created\");\r
+
+      \    pm.expect(json.order).to.be.an(\"object\");\r
+
+      \    pm.expect(json.order.id).to.be.a(\"number\");\r
+
+      \    pm.expect(json.order.delivery_date).to.eql(pm.collectionVariables.get(\"delivery_date\"));\r
+
+      \    pm.expect(json.order.product_name).to.eql(\"Торт для заказа\");\r
+
+      \    pm.expect(json.order.weight).to.eql(2.5);\r
+
+      \    pm.expect(json.order.order_price).to.be.a(\"number\");\r
+
+      \r
+
+      \    pm.collectionVariables.set(\"order_id\", json.order.id);\r
+
+      });\r\n"
+    language: text/javascript
+  - type: beforeRequest
+    code: "const d = new Date();\r
+
+      d.setDate(d.getDate() + 3);\r
+
+      const isoDate = d.toISOString().slice(0, 10);\r
+
+      pm.collectionVariables.set(\"delivery_date\", isoDate);\r\n"
+    language: text/javascript
+order: 7000
