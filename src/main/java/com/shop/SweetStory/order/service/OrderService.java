@@ -2,22 +2,14 @@ package com.shop.SweetStory.order.service;
 
 import com.shop.SweetStory.auth.entity.User;
 import com.shop.SweetStory.auth.repository.UserRepository;
-import com.shop.SweetStory.catalog.dto.ActionMessageResponse;
-import com.shop.SweetStory.catalog.entity.Product;
-import com.shop.SweetStory.catalog.repository.ProductRepository;
-import com.shop.SweetStory.order.dto.AdminOrderItemResponse;
-import com.shop.SweetStory.order.dto.AdminOrderResponse;
-import com.shop.SweetStory.order.dto.CreateOrderRequest;
-import com.shop.SweetStory.order.dto.CreateOrderResponse;
-import com.shop.SweetStory.order.dto.GroupedOrderItemResponse;
-import com.shop.SweetStory.order.dto.GroupedOrdersResponse;
-import com.shop.SweetStory.order.dto.MyOrderItemResponse;
-import com.shop.SweetStory.order.dto.MyOrderResponse;
-import com.shop.SweetStory.order.dto.OrderCreatedItemResponse;
-import com.shop.SweetStory.order.dto.OrderCustomerInfo;
-import com.shop.SweetStory.order.dto.OrderProductSummary;
-import com.shop.SweetStory.order.dto.UpdateOrderStatusRequest;
-import com.shop.SweetStory.order.dto.UpdateOrderStatusResponse;
+import com.shop.SweetStory.catalog.decoration.entity.Decoration;
+import com.shop.SweetStory.catalog.decoration.repository.DecorationRepository;
+import com.shop.SweetStory.catalog.filling.entity.Filling;
+import com.shop.SweetStory.catalog.filling.repository.FillingRepository;
+import com.shop.SweetStory.catalog.generalDto.ActionMessageResponse;
+import com.shop.SweetStory.catalog.product.entity.Product;
+import com.shop.SweetStory.catalog.product.repository.ProductRepository;
+import com.shop.SweetStory.order.dto.*;
 import com.shop.SweetStory.order.entity.Order;
 import com.shop.SweetStory.order.entity.OrderStatus;
 import com.shop.SweetStory.order.repository.OrderRepository;
@@ -42,17 +34,23 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
+    private final FillingRepository fillingRepository;
+    private final DecorationRepository decorationRepository;
     private final UserRepository userRepository;
     private final long maxOrdersPerDate;
 
     public OrderService(
             OrderRepository orderRepository,
             ProductRepository productRepository,
+            FillingRepository fillingRepository,
+            DecorationRepository decorationRepository,
             UserRepository userRepository,
             @Value("${app.orders.max-per-date:3}") long maxOrdersPerDate
     ) {
         this.orderRepository = orderRepository;
         this.productRepository = productRepository;
+        this.fillingRepository = fillingRepository;
+        this.decorationRepository = decorationRepository;
         this.userRepository = userRepository;
         this.maxOrdersPerDate = maxOrdersPerDate;
     }
@@ -71,22 +69,19 @@ public class OrderService {
         Product product = productRepository.findById(request.product_id())
                 .orElseThrow(() -> new NoSuchElementException("Product not found with id: " + request.product_id()));
 
-        BigDecimal basePrice = product.getCakePrice();
-        if (basePrice == null) {
-            throw new IllegalStateException("Product cake_price is not set for product id: " + product.getId());
-        }
+        validateWeight(product, request.weight());
 
-        BigDecimal weightCoefficient = calculateWeightCoefficient(request.weight());
-        BigDecimal orderPrice = basePrice
-                .multiply(weightCoefficient)
-                .setScale(2, RoundingMode.HALF_UP);
+        Filling filling = resolveAndValidateFilling(product, request.filling_id());
+        Decoration decoration = resolveAndValidateDecoration(product, request.decoration_id());
+
+        BigDecimal orderPrice = calculateOrderPrice(product, filling, decoration, request.weight());
 
         Order order = new Order();
         order.setDeliveryDate(request.delivery_date());
         order.setProduct(product);
         order.setUser(currentUser);
-        order.setFilling(request.filling());
-        order.setDecor(request.decor());
+        order.setFilling(filling);
+        order.setDecoration(decoration);
         order.setWeight(request.weight());
         order.setOrderPrice(orderPrice);
         order.setStatus(OrderStatus.PENDING);
@@ -142,7 +137,6 @@ public class OrderService {
 
     public BigDecimal getTotalRevenue() {
         BigDecimal revenue = orderRepository.calculateTotalRevenue(OrderStatus.CANCELLED);
-        // Если заказов нет, SUM вернет null. Возвращаем 0, чтобы фронт не сломался.
         return revenue != null ? revenue : BigDecimal.ZERO;
     }
 
@@ -153,11 +147,80 @@ public class OrderService {
         return new ActionMessageResponse("success", "Заказ удален");
     }
 
+    private void validateWeight(Product product, Double weight) {
+        if (weight == null || weight <= 0) {
+            throw new IllegalArgumentException("Order weight must be positive");
+        }
+        if (product.getMinWeight() != null && weight < product.getMinWeight()) {
+            throw new IllegalArgumentException("Weight " + weight + " is less than minWeight " + product.getMinWeight());
+        }
+        if (product.getMaxWeight() != null && weight > product.getMaxWeight()) {
+            throw new IllegalArgumentException("Weight " + weight + " is greater than maxWeight " + product.getMaxWeight());
+        }
+    }
+
+    private Filling resolveAndValidateFilling(Product product, Long fillingId) {
+        if (fillingId == null) {
+            return null;
+        }
+        Filling filling = fillingRepository.findById(fillingId)
+                .orElseThrow(() -> new NoSuchElementException("Filling not found with id: " + fillingId));
+
+        boolean isAvailable = product.getFillings() != null && product.getFillings().stream()
+                .anyMatch(f -> f.getId().equals(fillingId));
+        if (!isAvailable) {
+            throw new IllegalArgumentException("Filling " + fillingId + " is not available for product " + product.getId());
+        }
+        return filling;
+    }
+
+    private Decoration resolveAndValidateDecoration(Product product, Long decorationId) {
+        if (decorationId == null) {
+            return null;
+        }
+        Decoration decoration = decorationRepository.findById(decorationId)
+                .orElseThrow(() -> new NoSuchElementException("Decoration not found with id: " + decorationId));
+
+        boolean isAvailable = product.getDecorations() != null && product.getDecorations().stream()
+                .anyMatch(d -> d.getId().equals(decorationId));
+        if (!isAvailable) {
+            throw new IllegalArgumentException("Decoration " + decorationId + " is not available for product " + product.getId());
+        }
+        return decoration;
+    }
+
+    private BigDecimal calculateOrderPrice(
+            Product product,
+            Filling filling,
+            Decoration decoration,
+            Double weight
+    ) {
+        BigDecimal basePrice = product.getCakePrice();
+        if (basePrice == null) {
+            throw new IllegalStateException("Product cake_price is not set for product id: " + product.getId());
+        }
+
+        BigDecimal weightCoefficient = calculateWeightCoefficient(weight);
+        BigDecimal cakeTotal = basePrice.multiply(weightCoefficient);
+
+        BigDecimal fillingPrice = (filling != null && filling.getPrice() != null)
+                ? filling.getPrice()
+                : BigDecimal.ZERO;
+
+        BigDecimal decorationPrice = (decoration != null && decoration.getPrice() != null)
+                ? decoration.getPrice()
+                : BigDecimal.ZERO;
+
+        return cakeTotal
+                .add(fillingPrice)
+                .add(decorationPrice)
+                .setScale(2, RoundingMode.HALF_UP);
+    }
+
     private BigDecimal calculateWeightCoefficient(Double weight) {
         if (weight == null || weight <= 0) {
             throw new IllegalArgumentException("Order weight must be positive");
         }
-        // При необходимости замените на свою формулу коэффициента по весу
         return BigDecimal.valueOf(weight);
     }
 
@@ -176,13 +239,21 @@ public class OrderService {
                 .orElseThrow(() -> new NoSuchElementException("User not found: " + principalName));
     }
 
+    private String extractFillingName(Order order) {
+        return order.getFilling() != null ? order.getFilling().getName() : null;
+    }
+
+    private String extractDecorationName(Order order) {
+        return order.getDecoration() != null ? order.getDecoration().getName() : null;
+    }
+
     private OrderCreatedItemResponse toCreatedItemResponse(Order order) {
         return new OrderCreatedItemResponse(
                 order.getId(),
                 order.getDeliveryDate(),
                 order.getProduct().getName(),
-                order.getFilling(),
-                order.getDecor(),
+                extractFillingName(order),
+                extractDecorationName(order),
                 order.getWeight(),
                 order.getOrderPrice(),
                 order.getStatus().toApiValue()
@@ -201,8 +272,8 @@ public class OrderService {
                 order.getId(),
                 order.getDeliveryDate(),
                 summary,
-                order.getFilling(),
-                order.getDecor(),
+                extractFillingName(order),
+                extractDecorationName(order),
                 order.getWeight(),
                 order.getOrderPrice(),
                 order.getStatus().toApiValue()
@@ -223,8 +294,8 @@ public class OrderService {
                 order.getStatus().toApiValue(),
                 customerInfo,
                 order.getProduct().getName(),
-                order.getFilling(),
-                order.getDecor(),
+                extractFillingName(order),
+                extractDecorationName(order),
                 order.getWeight(),
                 order.getOrderPrice()
         );
@@ -238,8 +309,8 @@ public class OrderService {
                 user.getName(),
                 user.getPhone(),
                 order.getProduct().getName(),
-                order.getFilling(),
-                order.getDecor(),
+                extractFillingName(order),
+                extractDecorationName(order),
                 order.getWeight(),
                 order.getOrderPrice()
         );

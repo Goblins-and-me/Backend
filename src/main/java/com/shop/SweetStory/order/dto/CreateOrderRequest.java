@@ -6,16 +6,15 @@ import jakarta.validation.constraints.Positive;
 import java.time.LocalDate;
 
 public record CreateOrderRequest(
-
         @NotNull
         LocalDate delivery_date,
 
         @NotNull
         Long product_id,
 
-        String filling,
+        Long filling_id,
 
-        String decor,
+        Long decoration_id,
 
         @NotNull
         @Positive

@@ -1,7 +1,9 @@
 package com.shop.SweetStory.order.entity;
 
 import com.shop.SweetStory.auth.entity.User;
-import com.shop.SweetStory.catalog.entity.Product;
+import com.shop.SweetStory.catalog.decoration.entity.Decoration;
+import com.shop.SweetStory.catalog.filling.entity.Filling;
+import com.shop.SweetStory.catalog.product.entity.Product;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -34,11 +36,13 @@ public class Order {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(name = "filling")
-    private String filling;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "filling_id")
+    private Filling filling;
 
-    @Column(name = "decor")
-    private String decor;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "decoration_id")
+    private Decoration decoration;
 
     @Column(name = "weight", nullable = false)
     private Double weight;
