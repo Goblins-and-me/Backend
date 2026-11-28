@@ -62,12 +62,6 @@ public class Product {
     @Column(name = "max_weight")
     private Double maxWeight;
 
-    @Column(name = "average_rating", precision = 3, scale = 2)
-    private BigDecimal averageRating;
-
-    @Column(name = "reviews_count", nullable = false)
-    private Integer reviewsCount = 0;
-
     public String getPreviewImageUrl() {
         return (images == null || images.isEmpty()) ? null : images.get(0);
     }

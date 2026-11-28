@@ -11,6 +11,7 @@ import com.shop.SweetStory.catalog.review.dto.ReviewResponse;
 import com.shop.SweetStory.catalog.review.dto.UpdateReviewRequest;
 import com.shop.SweetStory.catalog.review.entity.ProductReview;
 import com.shop.SweetStory.catalog.review.repository.ProductReviewRepository;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -40,14 +41,15 @@ public class ProductReviewService {
     }
 
     public ReviewListResponse getReviewsByProductId(Long productId) {
-        Product product = findProductOrThrow(productId);
-        List<ReviewResponse> items = reviewRepository.findAllByProductIdOrderByCreatedAtDesc(productId)
-                .stream()
+        findProductOrThrow(productId);
+        List<ProductReview> reviews = reviewRepository.findAllByProductIdOrderByCreatedAtDesc(productId);
+        List<ReviewResponse> items = reviews.stream()
                 .map(this::toResponse)
                 .toList();
 
-        int count = product.getReviewsCount() != null ? product.getReviewsCount() : items.size();
-        return new ReviewListResponse(items, product.getAverageRating(), count);
+        int count = reviews.size();
+        BigDecimal averageRating = calculateAverageRating(reviews);
+        return new ReviewListResponse(items, averageRating, count);
     }
 
     @Transactional
@@ -66,14 +68,12 @@ public class ProductReviewService {
         review.setComment(request.comment() != null ? request.comment().trim() : null);
 
         ProductReview saved = reviewRepository.save(review);
-        recalculateProductRating(product);
-
         return toResponse(saved);
     }
 
     @Transactional
     public ReviewResponse updateReview(Long productId, Long reviewId, UpdateReviewRequest request) {
-        Product product = findProductOrThrow(productId);
+        findProductOrThrow(productId);
         User currentUser = resolveCurrentUser();
 
         ProductReview review = reviewRepository.findByIdAndProductId(reviewId, productId)
@@ -91,14 +91,12 @@ public class ProductReviewService {
         }
 
         ProductReview saved = reviewRepository.save(review);
-        recalculateProductRating(product);
-
         return toResponse(saved);
     }
 
     @Transactional
     public ActionMessageResponse deleteReview(Long productId, Long reviewId) {
-        Product product = findProductOrThrow(productId);
+        findProductOrThrow(productId);
         User currentUser = resolveCurrentUser();
 
         ProductReview review = reviewRepository.findByIdAndProductId(reviewId, productId)
@@ -111,25 +109,31 @@ public class ProductReviewService {
         }
 
         reviewRepository.delete(review);
-        recalculateProductRating(product);
-
         return new ActionMessageResponse("success", "Отзыв удален");
     }
 
-    private void recalculateProductRating(Product product) {
-        List<ProductReview> reviews = reviewRepository.findAllByProductIdOrderByCreatedAtDesc(product.getId());
-        int count = reviews.size();
-        product.setReviewsCount(count);
-
-        if (count == 0) {
-            product.setAverageRating(null);
-        } else {
-            int sum = reviews.stream().mapToInt(ProductReview::getRating).sum();
-            BigDecimal avg = BigDecimal.valueOf(sum)
-                    .divide(BigDecimal.valueOf(count), 2, RoundingMode.HALF_UP);
-            product.setAverageRating(avg);
+    @Transactional
+    public ActionMessageResponse deleteReviewById(Long reviewId) {
+        User currentUser = resolveCurrentUser();
+        boolean isAdmin = Boolean.TRUE.equals(currentUser.getIsAdmin());
+        if (!isAdmin) {
+            throw new SecurityException("Доступ разрешён только администратору");
         }
-        productRepository.save(product);
+
+        ProductReview review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new NoSuchElementException("Review not found with id: " + reviewId));
+
+        reviewRepository.delete(review);
+        return new ActionMessageResponse("success", "Отзыв удален");
+    }
+
+    private BigDecimal calculateAverageRating(List<ProductReview> reviews) {
+        if (reviews == null || reviews.isEmpty()) {
+            return null;
+        }
+        int sum = reviews.stream().mapToInt(ProductReview::getRating).sum();
+        return BigDecimal.valueOf(sum)
+                .divide(BigDecimal.valueOf(reviews.size()), 2, RoundingMode.HALF_UP);
     }
 
     private Product findProductOrThrow(Long productId) {
@@ -139,7 +143,10 @@ public class ProductReviewService {
 
     private User resolveCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated() || authentication.getName() == null) {
+        if (authentication == null
+                || !authentication.isAuthenticated()
+                || authentication instanceof AnonymousAuthenticationToken
+                || authentication.getName() == null) {
             throw new IllegalStateException("Authenticated user not found in security context");
         }
         String principalName = authentication.getName();
